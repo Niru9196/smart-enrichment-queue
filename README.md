@@ -260,9 +260,8 @@ What the tests cover:
    **direct** one (`DIRECT_URL`, used for migrations). Use separate Neon branches for dev and prod.
 2. **Render (API):** create a Blueprint from [`render.yaml`](render.yaml), then set
    `DATABASE_URL`, `DIRECT_URL` and `FRONTEND_ORIGIN` (the Vercel URL). The build runs
-   `prisma migrate deploy` once per deploy (on the free plan, which has no pre-deploy step), and
-   `/api/v1/health/ready` gates traffic. Seed once with
-   `DATABASE_URL=... npm run db:seed -w apps/api`.
+   `prisma migrate deploy` and the idempotent demo seed once per deploy (on the free plan, which
+   has no pre-deploy step), and `/api/v1/health/ready` gates traffic.
 3. **Vercel (web):** import the repo with root directory `apps/web` (settings in
    [`apps/web/vercel.json`](apps/web/vercel.json)) and set `VITE_API_BASE_URL` to the Render URL
    plus `/api/v1`.

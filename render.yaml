@@ -6,10 +6,11 @@ services:
     plan: free
     rootDir: .
     # --include=dev: NODE_ENV=production would otherwise skip tsc and the Prisma CLI.
-    # Migrations run once per deploy, during the build, not on every API boot. (On a paid plan,
-    # move `npm run db:deploy -w apps/api` into preDeployCommand instead.) Keep migrations
-    # backward compatible, since the previous release keeps serving until the new one is healthy.
-    buildCommand: npm ci --include=dev && npm run build -w apps/api && npm run db:deploy -w apps/api
+    # Migrations and the idempotent demo seed run once per deploy, during the build, not on
+    # every API boot. (On a paid plan, move these into preDeployCommand instead.) Keep
+    # migrations backward compatible, since the previous release keeps serving until the new
+    # one is healthy.
+    buildCommand: npm ci --include=dev && npm run build -w apps/api && npm run db:deploy -w apps/api && npm run db:seed -w apps/api
     startCommand: npm run start -w apps/api
     healthCheckPath: /api/v1/health/ready
     autoDeploy: true
