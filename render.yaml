@@ -1,0 +1,30 @@
+# Render Blueprint for the API. The database is Neon (external); set its URLs in the dashboard.
+services:
+  - type: web
+    name: smart-enrichment-queue-api
+    runtime: node
+    plan: free
+    rootDir: .
+    # --include=dev: NODE_ENV=production would otherwise skip tsc and the Prisma CLI.
+    # Migrations run once per deploy, during the build, not on every API boot. (On a paid plan,
+    # move `npm run db:deploy -w apps/api` into preDeployCommand instead.) Keep migrations
+    # backward compatible, since the previous release keeps serving until the new one is healthy.
+    buildCommand: npm ci --include=dev && npm run build -w apps/api && npm run db:deploy -w apps/api
+    startCommand: npm run start -w apps/api
+    healthCheckPath: /api/v1/health/ready
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '22'
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: DEMO_USER_EMAIL
+        value: demo@saasquatch.local
+      - key: CREDITS_PER_ENRICHMENT
+        value: '1'

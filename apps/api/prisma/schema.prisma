@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String          @id @default(uuid()) @db.Uuid
+  email       String          @unique
+  createdAt   DateTime        @default(now()) @map("created_at")
+  preferences UserPreference?
+  queueItems  QueueItem[]
+
+  @@map("users")
+}
+
+/// Shared company catalogue. NULL means "unknown", never "zero" or "no".
+model Company {
+  id               String      @id @default(uuid()) @db.Uuid
+  name             String
+  domain           String?
+  industry         String?
+  city             String?
+  state            String?
+  country          String?
+  employeeCount    Int?        @map("employee_count")
+  /// Annual revenue in USD.
+  estimatedRevenue BigInt?     @map("estimated_revenue")
+  /// Where estimatedRevenue came from, e.g. "ai_estimate" or "public_filing".
+  revenueSource    String?     @map("revenue_source")
+  source           String
+  sourceRecordId   String      @map("source_record_id")
+  /// Source-specific fields that are not filtered or sorted on (linkedinUrl, description, ...).
+  attributes       Json        @default("{}")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  queueItems       QueueItem[]
+
+  @@unique([source, sourceRecordId])
+  @@index([industry])
+  @@index([country])
+  @@index([employeeCount])
+  @@index([estimatedRevenue])
+  @@index([name])
+  @@map("companies")
+}
+
+/// One current ICP configuration per user. `criteria` is validated by the API's Zod schema.
+model UserPreference {
+  userId    String   @id @map("user_id") @db.Uuid
+  criteria  Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+enum QueueStatus {
+  queued
+  enriched
+  failed
+  skipped
+}
+
+model QueueItem {
+  id               String      @id @default(uuid()) @db.Uuid
+  userId           String      @map("user_id") @db.Uuid
+  companyId        String      @map("company_id") @db.Uuid
+  status           QueueStatus @default(queued)
+  estimatedCredits Int         @map("estimated_credits")
+  /// Human-readable reason for the latest status, e.g. why a simulated enrichment failed.
+  statusReason     String?     @map("status_reason")
+  addedAt          DateTime    @default(now()) @map("added_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company          Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([userId, status, addedAt])
+  @@map("queue_items")
+}

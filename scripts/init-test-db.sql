@@ -1,0 +1,1 @@
+CREATE DATABASE seq_test OWNER seq;
